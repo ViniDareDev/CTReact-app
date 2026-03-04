@@ -80,6 +80,8 @@ const Cadastro = () => {
   const [modalidade, setModalidade] = useState<Modalidade | "">("");
   const [tipoPlano, setTipoPlano] = useState<TipoPlano | "">("");
   const [frequencia, setFrequencia] = useState("");
+  const [senha, setSenha] = useState("");
+  const [mostrarSenha, setMostrarSenha] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
