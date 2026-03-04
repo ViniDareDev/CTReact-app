@@ -29,8 +29,12 @@ const Plano = () => {
           </div>
           <div className="space-y-3">
             <div className="flex justify-between">
-              <span className="text-xs text-muted-foreground">Tipo</span>
+              <span className="text-xs text-muted-foreground">Plano</span>
               <span className="font-heading text-sm font-bold gold-text">{planInfo.tipo}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-xs text-muted-foreground">Modalidade</span>
+              <span className="text-sm font-medium">{planInfo.modalidade}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-xs text-muted-foreground">Frequência</span>
