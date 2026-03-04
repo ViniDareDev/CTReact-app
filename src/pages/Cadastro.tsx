@@ -141,6 +141,7 @@ const Cadastro = () => {
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
+      localStorage.setItem("userName", nome);
       toast({ title: "Cadastro realizado com sucesso!", description: "Faça login para acessar o app." });
       navigate("/");
     }, 1200);
