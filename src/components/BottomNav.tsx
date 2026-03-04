@@ -3,10 +3,11 @@ import { CalendarDays, ClipboardCheck, CreditCard, FileText, Home, User } from "
 
 const navItems = [
   { icon: Home, label: "Início", path: "/dashboard" },
+  { icon: User, label: "Perfil", path: "/perfil" },
+  { icon: FileText, label: "Plano", path: "/plano" },
+  { icon: CreditCard, label: "Financeiro", path: "/financeiro" },
   { icon: CalendarDays, label: "Agendar", path: "/agendamento" },
   { icon: ClipboardCheck, label: "Avaliação", path: "/avaliacao" },
-  { icon: CreditCard, label: "Financeiro", path: "/financeiro" },
-  { icon: User, label: "Perfil", path: "/perfil" },
 ];
 
 const BottomNav = () => {
