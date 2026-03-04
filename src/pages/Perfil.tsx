@@ -6,6 +6,7 @@ const profileData = {
   email: "joao@email.com",
   telefone: "(11) 99999-9999",
   nascimento: "15/03/1990",
+  modalidade: "TREINO HÍBRIDO",
   plano: "Trimestral",
   aulaSemana: "3x semana",
   vencimento: "10/03/2026",
@@ -50,6 +51,10 @@ const Perfil = () => {
           <h3 className="mb-3 font-heading text-sm font-bold gold-text">Meu Plano</h3>
           <div className="grid grid-cols-2 gap-3">
             <div>
+              <p className="text-[10px] text-muted-foreground">Modalidade</p>
+              <p className="text-sm font-semibold">{profileData.modalidade}</p>
+            </div>
+            <div>
               <p className="text-[10px] text-muted-foreground">Plano</p>
               <p className="text-sm font-semibold">{profileData.plano}</p>
             </div>
@@ -57,7 +62,7 @@ const Perfil = () => {
               <p className="text-[10px] text-muted-foreground">Frequência</p>
               <p className="text-sm font-semibold">{profileData.aulaSemana}</p>
             </div>
-            <div className="col-span-2">
+            <div>
               <p className="text-[10px] text-muted-foreground">Vencimento</p>
               <p className="text-sm font-semibold">{profileData.vencimento}</p>
             </div>

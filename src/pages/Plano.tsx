@@ -3,6 +3,7 @@ import AppLayout from "@/components/AppLayout";
 
 const planInfo = {
   tipo: "Trimestral",
+  modalidade: "TREINO HÍBRIDO",
   aulaSemana: "3x semana",
   inicio: "10/12/2025",
   fim: "10/03/2026",
@@ -28,8 +29,12 @@ const Plano = () => {
           </div>
           <div className="space-y-3">
             <div className="flex justify-between">
-              <span className="text-xs text-muted-foreground">Tipo</span>
+              <span className="text-xs text-muted-foreground">Plano</span>
               <span className="font-heading text-sm font-bold gold-text">{planInfo.tipo}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-xs text-muted-foreground">Modalidade</span>
+              <span className="text-sm font-medium">{planInfo.modalidade}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-xs text-muted-foreground">Frequência</span>
@@ -88,25 +93,6 @@ const Plano = () => {
           </div>
         </div>
 
-        {/* Business hours */}
-        <div className="glass-card p-4">
-          <h3 className="mb-3 font-heading text-sm font-bold">Horários de Funcionamento</h3>
-          <p className="text-xs text-muted-foreground">Segunda à Sexta</p>
-          <div className="mt-2 space-y-1">
-            <div className="flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full bg-success" />
-              <span className="text-xs">06:00 — 12:00</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full bg-destructive" />
-              <span className="text-xs text-muted-foreground">12:00 — 16:00 (Fechado)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full bg-success" />
-              <span className="text-xs">16:00 — 21:00</span>
-            </div>
-          </div>
-        </div>
       </div>
     </AppLayout>
   );
