@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { CalendarDays, ClipboardCheck, CreditCard, FileText, User } from "lucide-react";
 import AppLayout from "@/components/AppLayout";
@@ -8,18 +9,6 @@ const menuItems = [
     label: "Meu Perfil",
     description: "Dados pessoais e configurações",
     path: "/perfil",
-  },
-  {
-    icon: CalendarDays,
-    label: "Agendamento / Remarcação",
-    description: "Agende ou remarque suas aulas",
-    path: "/agendamento",
-  },
-  {
-    icon: ClipboardCheck,
-    label: "Avaliação",
-    description: "Agende sua avaliação física",
-    path: "/avaliacao",
   },
   {
     icon: FileText,
@@ -33,10 +22,30 @@ const menuItems = [
     description: "Pagamentos e faturas",
     path: "/financeiro",
   },
+  {
+    icon: CalendarDays,
+    label: "Agendamento / Remarcação",
+    description: "Agende ou remarque suas aulas",
+    path: "/agendamento",
+  },
+  {
+    icon: ClipboardCheck,
+    label: "Avaliação",
+    description: "Agende sua avaliação física",
+    path: "/avaliacao",
+  },
 ];
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const [nomeUsuario, setNomeUsuario] = useState("Aluno");
+
+  useEffect(() => {
+    const nome = localStorage.getItem("userName");
+    if (nome) {
+      setNomeUsuario(nome.split(" ")[0]);
+    }
+  }, []);
 
   return (
     <AppLayout title="Início">
@@ -44,7 +53,7 @@ const Dashboard = () => {
         {/* Greeting */}
         <div className="mb-6">
           <h1 className="font-heading text-xl font-bold">
-            Olá, <span className="gold-text">Aluno</span> 👋
+            Olá, <span className="gold-text">{nomeUsuario}</span> 👋
           </h1>
           <p className="text-sm text-muted-foreground">
             Bem-vindo ao REACT Centro de Treinamento
@@ -82,6 +91,26 @@ const Dashboard = () => {
               </div>
             </button>
           ))}
+        </div>
+
+        {/* Business hours */}
+        <div className="glass-card p-4">
+          <h3 className="mb-3 font-heading text-sm font-bold">Horários de Funcionamento</h3>
+          <p className="text-xs text-muted-foreground">Segunda à Sexta</p>
+          <div className="mt-2 space-y-1">
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full bg-success" />
+              <span className="text-xs">06:00 — 12:00</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full bg-destructive" />
+              <span className="text-xs text-muted-foreground">12:00 — 16:00 (Fechado)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full bg-success" />
+              <span className="text-xs">16:00 — 21:00</span>
+            </div>
+          </div>
         </div>
       </div>
     </AppLayout>
