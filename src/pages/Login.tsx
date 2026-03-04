@@ -87,12 +87,19 @@ const Login = () => {
               {loading ? "Entrando..." : "Entrar"}
             </Button>
 
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full border-primary/50 text-primary hover:bg-primary/10 font-heading font-semibold tracking-wide transition-all"
+              onClick={() => navigate("/cadastro")}
+            >
+              Cadastre-se
+            </Button>
+
             <button
               type="button"
-              className="w-full text-center text-sm text-primary hover:text-gold-light transition-colors"
-              onClick={() =>
-                toast({ title: "Recuperação de senha", description: "Funcionalidade será habilitada em breve." })
-              }
+              className="w-full text-center text-sm text-muted-foreground hover:text-primary transition-colors"
+              onClick={() => navigate("/esqueci-senha")}
             >
               Esqueci minha senha
             </button>
