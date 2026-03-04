@@ -126,8 +126,12 @@ const Cadastro = () => {
 
   const handleCadastro = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nome || !email || !telefone || !dataNascimento) {
+    if (!nome || !email || !telefone || !dataNascimento || !senha) {
       toast({ title: "Preencha todos os campos obrigatórios", variant: "destructive" });
+      return;
+    }
+    if (senha.length < 8 || !/[A-Z]/.test(senha) || !/[0-9]/.test(senha) || !/[!@#$%^&*]/.test(senha)) {
+      toast({ title: "A senha não atende aos requisitos mínimos", variant: "destructive" });
       return;
     }
     if (!modalidade || !tipoPlano || !frequencia) {
