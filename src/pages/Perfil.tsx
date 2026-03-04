@@ -6,6 +6,7 @@ const profileData = {
   email: "joao@email.com",
   telefone: "(11) 99999-9999",
   nascimento: "15/03/1990",
+  modalidade: "TREINO HÍBRIDO",
   plano: "Trimestral",
   aulaSemana: "3x semana",
   vencimento: "10/03/2026",
