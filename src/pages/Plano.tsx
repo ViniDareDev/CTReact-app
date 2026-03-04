@@ -3,6 +3,7 @@ import AppLayout from "@/components/AppLayout";
 
 const planInfo = {
   tipo: "Trimestral",
+  modalidade: "TREINO HÍBRIDO",
   aulaSemana: "3x semana",
   inicio: "10/12/2025",
   fim: "10/03/2026",
