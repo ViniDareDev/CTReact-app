@@ -201,6 +201,30 @@ const Cadastro = () => {
                 <CalendarDays className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input type="date" placeholder="Data de nascimento" value={dataNascimento} onChange={(e) => setDataNascimento(e.target.value)} className="border-border/50 bg-secondary/50 pl-10 text-foreground placeholder:text-muted-foreground focus:border-primary" />
               </div>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  type={mostrarSenha ? "text" : "password"}
+                  placeholder="Senha"
+                  value={senha}
+                  onChange={(e) => setSenha(e.target.value)}
+                  className="border-border/50 bg-secondary/50 pl-10 pr-10 text-foreground placeholder:text-muted-foreground focus:border-primary"
+                />
+                <button
+                  type="button"
+                  onClick={() => setMostrarSenha(!mostrarSenha)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {mostrarSenha ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              <div className="rounded-lg bg-secondary/30 p-3 space-y-1">
+                <p className="text-[10px] font-semibold text-muted-foreground mb-1">A senha deve conter:</p>
+                <p className={`text-[10px] ${senha.length >= 8 ? "text-success" : "text-muted-foreground"}`}>✓ Mínimo de 8 caracteres</p>
+                <p className={`text-[10px] ${/[A-Z]/.test(senha) ? "text-success" : "text-muted-foreground"}`}>✓ Pelo menos uma letra maiúscula</p>
+                <p className={`text-[10px] ${/[0-9]/.test(senha) ? "text-success" : "text-muted-foreground"}`}>✓ Pelo menos um número</p>
+                <p className={`text-[10px] ${/[!@#$%^&*]/.test(senha) ? "text-success" : "text-muted-foreground"}`}>✓ Pelo menos um caractere especial (!@#$%^&*)</p>
+              </div>
             </div>
 
             {/* Modalidade */}
