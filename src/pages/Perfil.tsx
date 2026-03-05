@@ -24,7 +24,6 @@ const Perfil = () => {
             </span>
           </div>
           <h2 className="mt-3 font-heading text-lg font-bold">{profileData.nome}</h2>
-          <p className="text-xs text-muted-foreground">{profileData.email}</p>
         </div>
 
         {/* Info cards */}
