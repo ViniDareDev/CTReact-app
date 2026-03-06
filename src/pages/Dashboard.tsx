@@ -1,79 +1,45 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { CalendarDays, ClipboardCheck, CreditCard, FileText, User } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
+import { useAuth } from "@/contexts/AuthContext";
 
 const menuItems = [
-  {
-    icon: User,
-    label: "Meu Perfil",
-    description: "Dados pessoais e configurações",
-    path: "/perfil",
-  },
-  {
-    icon: FileText,
-    label: "Meu Plano",
-    description: "Detalhes do seu plano atual",
-    path: "/plano",
-  },
-  {
-    icon: CreditCard,
-    label: "Financeiro",
-    description: "Pagamentos e faturas",
-    path: "/financeiro",
-  },
-  {
-    icon: CalendarDays,
-    label: "Agendamento / Remarcação",
-    description: "Agende ou remarque suas aulas",
-    path: "/agendamento",
-  },
-  {
-    icon: ClipboardCheck,
-    label: "Avaliação",
-    description: "Agende sua avaliação física",
-    path: "/avaliacao",
-  },
+  { icon: User, label: "Meu Perfil", description: "Dados pessoais e configurações", path: "/perfil" },
+  { icon: FileText, label: "Meu Plano", description: "Detalhes do seu plano atual", path: "/plano" },
+  { icon: CreditCard, label: "Financeiro", description: "Pagamentos e faturas", path: "/financeiro" },
+  { icon: CalendarDays, label: "Agendamento / Remarcação", description: "Agende ou remarque suas aulas", path: "/agendamento" },
+  { icon: ClipboardCheck, label: "Avaliação", description: "Agende sua avaliação física", path: "/avaliacao" },
 ];
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const [nomeUsuario, setNomeUsuario] = useState("Aluno");
-
-  useEffect(() => {
-    const nome = localStorage.getItem("userName");
-    if (nome) {
-      setNomeUsuario(nome.split(" ")[0]);
-    }
-  }, []);
+  const { profile } = useAuth();
+  const nomeUsuario = profile?.name?.split(" ")[0] || "Aluno";
 
   return (
     <AppLayout title="Início">
       <div className="animate-fade-in space-y-4">
-        {/* Greeting */}
         <div className="mb-6">
           <h1 className="font-heading text-xl font-bold">
             Olá, <span className="gold-text">{nomeUsuario}</span> 👋
           </h1>
-          <p className="text-sm text-muted-foreground">
-            Bem-vindo ao REACT Centro de Treinamento
-          </p>
+          <p className="text-sm text-muted-foreground">Bem-vindo ao REACT Centro de Treinamento</p>
         </div>
 
-        {/* Quick info card */}
         <div className="glass-card glow-gold p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-muted-foreground">Próxima aula</p>
-              <p className="font-heading text-sm font-semibold">Seg, 10 Fev — 07:00</p>
+              <p className="text-xs text-muted-foreground">Modalidade</p>
+              <p className="font-heading text-sm font-semibold">{profile?.modality || "—"}</p>
             </div>
             <div className="gold-gradient rounded-lg px-3 py-1.5">
-              <span className="font-heading text-xs font-bold text-primary-foreground">3x Semana</span>
+              <span className="font-heading text-xs font-bold text-primary-foreground">
+                {profile?.frequency ? `${profile.frequency} Semana` : "—"}
+              </span>
             </div>
           </div>
         </div>
 
-        {/* Menu grid */}
         <div className="space-y-3">
           {menuItems.map((item, index) => (
             <button
@@ -93,7 +59,6 @@ const Dashboard = () => {
           ))}
         </div>
 
-        {/* Business hours */}
         <div className="glass-card p-4">
           <h3 className="mb-3 font-heading text-sm font-bold">Horários de Funcionamento</h3>
           <p className="text-xs text-muted-foreground">Segunda à Sexta</p>
