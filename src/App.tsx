@@ -3,9 +3,11 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import Login from "./pages/Login";
-import Cadastro from "./pages/Cadastro";
 import EsqueciSenha from "./pages/EsqueciSenha";
+import AulaExperimental from "./pages/AulaExperimental";
 import Dashboard from "./pages/Dashboard";
 import Agendamento from "./pages/Agendamento";
 import Avaliacao from "./pages/Avaliacao";
@@ -24,20 +26,22 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Login />} />
-          <Route path="/cadastro" element={<Cadastro />} />
-          <Route path="/esqueci-senha" element={<EsqueciSenha />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/agendamento" element={<Agendamento />} />
-          <Route path="/avaliacao" element={<Avaliacao />} />
-          <Route path="/perfil" element={<Perfil />} />
-          <Route path="/plano" element={<Plano />} />
-          <Route path="/financeiro" element={<Financeiro />} />
-          <Route path="/pagamento" element={<Pagamento />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AuthProvider>
+          <Routes>
+            <Route path="/" element={<Login />} />
+            <Route path="/esqueci-senha" element={<EsqueciSenha />} />
+            <Route path="/aula-experimental" element={<AulaExperimental />} />
+            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/agendamento" element={<ProtectedRoute><Agendamento /></ProtectedRoute>} />
+            <Route path="/avaliacao" element={<ProtectedRoute><Avaliacao /></ProtectedRoute>} />
+            <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
+            <Route path="/plano" element={<ProtectedRoute><Plano /></ProtectedRoute>} />
+            <Route path="/financeiro" element={<ProtectedRoute><Financeiro /></ProtectedRoute>} />
+            <Route path="/pagamento" element={<ProtectedRoute><Pagamento /></ProtectedRoute>} />
+            <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

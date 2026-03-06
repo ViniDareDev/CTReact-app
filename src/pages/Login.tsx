@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Eye, EyeOff, Lock, User } from "lucide-react";
+import { Eye, EyeOff, Lock, User, Dumbbell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import loginBg from "@/assets/login-bg.jpeg";
 
 const Login = () => {
@@ -13,6 +14,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { signIn } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,23 +23,38 @@ const Login = () => {
       return;
     }
     setLoading(true);
-    // Simulated login - will be replaced with real auth
-    setTimeout(() => {
+
+    const { error } = await signIn(email, password);
+
+    if (error) {
       setLoading(false);
+      toast({ title: "E-mail ou senha incorretos", variant: "destructive" });
+      return;
+    }
+
+    // Role check happens in AuthContext, redirect based on role
+    const { data: roleData } = await (await import("@/integrations/supabase/client")).supabase
+      .from("user_roles")
+      .select("role")
+      .single();
+
+    setLoading(false);
+
+    if (roleData?.role === "admin") {
+      navigate("/admin");
+    } else {
       navigate("/dashboard");
-    }, 1000);
+    }
   };
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden">
-      {/* Background image */}
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{ backgroundImage: `url(${loginBg})` }}
       />
       <div className="absolute inset-0 bg-background/60 backdrop-blur-sm" />
 
-      {/* Login card */}
       <div className="relative z-10 mx-4 w-full max-w-md animate-fade-in">
         <div className="glass-card p-8">
           <div className="mb-8 text-center">
@@ -91,9 +108,10 @@ const Login = () => {
               type="button"
               variant="outline"
               className="w-full border-primary/50 text-primary hover:bg-primary/10 font-heading font-semibold tracking-wide transition-all"
-              onClick={() => navigate("/cadastro")}
+              onClick={() => navigate("/aula-experimental")}
             >
-              Cadastre-se
+              <Dumbbell className="h-4 w-4 mr-2" />
+              Agende uma Aula Experimental
             </Button>
 
             <button
