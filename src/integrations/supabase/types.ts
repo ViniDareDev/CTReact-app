@@ -14,16 +14,208 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      bookings: {
+        Row: {
+          booking_date: string
+          class_id: string
+          created_at: string | null
+          id: string
+          is_trial: boolean | null
+          status: string | null
+          trial_name: string | null
+          trial_phone: string | null
+          user_id: string | null
+        }
+        Insert: {
+          booking_date: string
+          class_id: string
+          created_at?: string | null
+          id?: string
+          is_trial?: boolean | null
+          status?: string | null
+          trial_name?: string | null
+          trial_phone?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          booking_date?: string
+          class_id?: string
+          created_at?: string | null
+          id?: string
+          is_trial?: boolean | null
+          status?: string | null
+          trial_name?: string | null
+          trial_phone?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      classes: {
+        Row: {
+          created_at: string | null
+          day_of_week: number
+          id: string
+          max_students: number | null
+          teacher_id: string | null
+          time_slot: string
+        }
+        Insert: {
+          created_at?: string | null
+          day_of_week: number
+          id?: string
+          max_students?: number | null
+          teacher_id?: string | null
+          time_slot: string
+        }
+        Update: {
+          created_at?: string | null
+          day_of_week?: number
+          id?: string
+          max_students?: number | null
+          teacher_id?: string | null
+          time_slot?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "classes_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string | null
+          description: string | null
+          id: string
+          method: string
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          method: string
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          method?: string
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          birth_date: string | null
+          created_at: string | null
+          email: string
+          frequency: string | null
+          id: string
+          is_inadimplente: boolean | null
+          modality: string | null
+          name: string
+          phone: string | null
+          plan_type: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          birth_date?: string | null
+          created_at?: string | null
+          email: string
+          frequency?: string | null
+          id: string
+          is_inadimplente?: boolean | null
+          modality?: string | null
+          name: string
+          phone?: string | null
+          plan_type?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          birth_date?: string | null
+          created_at?: string | null
+          email?: string
+          frequency?: string | null
+          id?: string
+          is_inadimplente?: boolean | null
+          modality?: string | null
+          name?: string
+          phone?: string | null
+          plan_type?: string | null
+        }
+        Relationships: []
+      }
+      teachers: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +342,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const
