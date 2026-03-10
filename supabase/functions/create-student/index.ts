@@ -2,7 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 Deno.serve(async (req) => {
@@ -21,7 +21,7 @@ Deno.serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const anonKey = Deno.env.get("SUPABASE_PUBLISHABLE_KEY")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
     // Verify caller is admin
     const callerClient = createClient(supabaseUrl, anonKey, {
@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { email, password, name, phone, birth_date, modality, plan_type, frequency } = await req.json();
+    const { email, password, name, phone, birth_date, modality, plan_type, frequency, scheduled_days } = await req.json();
 
     // Create user with admin API
     const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
@@ -65,6 +65,14 @@ Deno.serve(async (req) => {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // Update scheduled_days if provided
+    if (scheduled_days && newUser?.user?.id) {
+      await adminClient
+        .from("profiles")
+        .update({ scheduled_days })
+        .eq("id", newUser.user.id);
     }
 
     return new Response(JSON.stringify({ user: newUser }), {

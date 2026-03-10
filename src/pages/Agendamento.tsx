@@ -12,10 +12,7 @@ const months = [
   "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
 ];
 
-const allTimeSlots = [
-  "06:00", "07:00", "08:00", "09:00", "10:00", "11:00",
-  "16:00", "17:00", "18:00", "19:00", "20:00",
-];
+const allTimeSlots = ["16:00", "17:00", "18:00", "19:00", "20:00"];
 
 const Agendamento = () => {
   const [currentDate] = useState(new Date());
@@ -46,7 +43,6 @@ const Agendamento = () => {
   const isUnavailable = (day: number) =>
     isInadimplente || day < today || isWeekend(day);
 
-  // Fetch available spots for selected day
   useEffect(() => {
     if (!selectedDay || isInadimplente) return;
     const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(selectedDay).padStart(2, "0")}`;
@@ -79,9 +75,7 @@ const Agendamento = () => {
 
     const channel = supabase
       .channel(`bookings-${dateStr}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "bookings" }, () => {
-        fetchSpots();
-      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "bookings" }, () => fetchSpots())
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
@@ -157,7 +151,6 @@ const Agendamento = () => {
   return (
     <AppLayout title="Agendamento">
       <div className="animate-fade-in space-y-5">
-        {/* Remaining reschedules */}
         {!isInadimplente && (
           <div className="glass-card flex items-center gap-3 p-3">
             <AlertTriangle className="h-5 w-5 text-primary" />
@@ -168,7 +161,6 @@ const Agendamento = () => {
           </div>
         )}
 
-        {/* Calendar */}
         <div className="glass-card p-4">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="font-heading text-sm font-bold">
@@ -207,7 +199,6 @@ const Agendamento = () => {
           </div>
         </div>
 
-        {/* Time slots */}
         {selectedDay && !isInadimplente && (
           <div className="glass-card animate-slide-up p-4">
             <div className="mb-3 flex items-center gap-2">
@@ -249,14 +240,9 @@ const Agendamento = () => {
           </div>
         )}
 
-        {/* Actions */}
         {!isInadimplente && (
           <div className="flex gap-3">
-            <Button
-              variant="outline"
-              className="flex-1 border-border"
-              onClick={() => { setSelectedDay(null); setSelectedTime(null); }}
-            >
+            <Button variant="outline" className="flex-1 border-border" onClick={() => { setSelectedDay(null); setSelectedTime(null); }}>
               Cancelar
             </Button>
             <Button
@@ -269,15 +255,12 @@ const Agendamento = () => {
           </div>
         )}
 
-        {/* Inadimplência alert */}
         {isInadimplente && (
           <div className="glass-card border-destructive/30 p-5 animate-fade-in">
             <div className="flex items-start gap-3">
               <ShieldAlert className="h-6 w-6 text-destructive shrink-0 mt-0.5" />
               <div>
-                <h3 className="font-heading text-sm font-bold text-destructive mb-1">
-                  Agendamento Bloqueado
-                </h3>
+                <h3 className="font-heading text-sm font-bold text-destructive mb-1">Agendamento Bloqueado</h3>
                 <p className="text-xs text-muted-foreground leading-relaxed">
                   Identificamos uma mensalidade em aberto na sua conta. Para voltar a agendar ou remarcar suas aulas, por favor regularize sua situação financeira acessando a tela de <span className="text-primary font-medium">Financeiro</span>.
                 </p>
