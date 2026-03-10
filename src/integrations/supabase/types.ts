@@ -56,6 +56,13 @@ export type Database = {
             referencedRelation: "classes"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "bookings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       classes: {
@@ -121,7 +128,15 @@ export type Database = {
           status?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "payments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -136,6 +151,7 @@ export type Database = {
           name: string
           phone: string | null
           plan_type: string | null
+          scheduled_days: number[] | null
         }
         Insert: {
           avatar_url?: string | null
@@ -149,6 +165,7 @@ export type Database = {
           name: string
           phone?: string | null
           plan_type?: string | null
+          scheduled_days?: number[] | null
         }
         Update: {
           avatar_url?: string | null
@@ -162,6 +179,7 @@ export type Database = {
           name?: string
           phone?: string | null
           plan_type?: string | null
+          scheduled_days?: number[] | null
         }
         Relationships: []
       }
