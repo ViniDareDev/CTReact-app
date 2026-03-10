@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Lock, User, Dumbbell } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,18 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { signIn } = useAuth();
+  const { signIn, user, role, loading: authLoading } = useAuth();
+
+  // Redirect when auth state changes (handles role-based redirect)
+  useEffect(() => {
+    if (!authLoading && user && role) {
+      if (role === "admin") {
+        navigate("/admin", { replace: true });
+      } else {
+        navigate("/dashboard", { replace: true });
+      }
+    }
+  }, [user, role, authLoading, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,19 +43,8 @@ const Login = () => {
       return;
     }
 
-    // Role check happens in AuthContext, redirect based on role
-    const { data: roleData } = await (await import("@/integrations/supabase/client")).supabase
-      .from("user_roles")
-      .select("role")
-      .single();
-
+    // Redirect will happen via useEffect when AuthContext updates role
     setLoading(false);
-
-    if (roleData?.role === "admin") {
-      navigate("/admin");
-    } else {
-      navigate("/dashboard");
-    }
   };
 
   return (
