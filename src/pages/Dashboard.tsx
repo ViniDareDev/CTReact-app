@@ -38,6 +38,12 @@ const Dashboard = () => {
               </span>
             </div>
           </div>
+          {profile?.plan_type && (
+            <div className="mt-2 pt-2 border-t border-border/30">
+              <p className="text-xs text-muted-foreground">Plano</p>
+              <p className="font-heading text-sm font-semibold">{profile.plan_type}</p>
+            </div>
+          )}
         </div>
 
         <div className="space-y-3">
@@ -65,7 +71,15 @@ const Dashboard = () => {
           <div className="mt-2 space-y-1">
             <div className="flex items-center gap-2">
               <div className="h-2 w-2 rounded-full bg-success" />
-              <span className="text-xs">16:00 — 21:00</span>
+              <span className="text-xs">06:00 — 12:00</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full bg-destructive" />
+              <span className="text-xs text-muted-foreground">12:00 — 16:00 (Fechado)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full bg-success" />
+              <span className="text-xs">16:00 — 20:00</span>
             </div>
           </div>
         </div>

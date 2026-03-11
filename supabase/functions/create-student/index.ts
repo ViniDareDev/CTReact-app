@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { email, password, name, phone, birth_date, modality, plan_type, frequency, scheduled_days } = await req.json();
+    const { email, password, name, phone, birth_date, modality, plan_type, frequency, scheduled_days, scheduled_time_slots } = await req.json();
 
     // Create user with admin API
     const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
@@ -67,12 +67,56 @@ Deno.serve(async (req) => {
       });
     }
 
+    const userId = newUser?.user?.id;
+    if (!userId) {
+      return new Response(JSON.stringify({ error: "Failed to create user" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Update scheduled_days if provided
-    if (scheduled_days && newUser?.user?.id) {
+    if (scheduled_days) {
       await adminClient
         .from("profiles")
         .update({ scheduled_days })
-        .eq("id", newUser.user.id);
+        .eq("id", userId);
+    }
+
+    // Auto-book classes for each scheduled day+time
+    if (scheduled_days && scheduled_time_slots) {
+      const today = new Date();
+      const todayStr = today.toISOString().split("T")[0];
+
+      for (const dayOfWeek of scheduled_days) {
+        const timeSlot = scheduled_time_slots[String(dayOfWeek)];
+        if (!timeSlot) continue;
+
+        // Find the class for this day+time
+        const { data: classData } = await adminClient
+          .from("classes")
+          .select("id")
+          .eq("day_of_week", dayOfWeek)
+          .eq("time_slot", timeSlot)
+          .single();
+
+        if (classData) {
+          // Find the next occurrence of this day of week
+          const currentDow = today.getDay();
+          let daysUntil = dayOfWeek - currentDow;
+          if (daysUntil <= 0) daysUntil += 7;
+          const nextDate = new Date(today);
+          nextDate.setDate(today.getDate() + daysUntil);
+          const bookingDate = nextDate.toISOString().split("T")[0];
+
+          await adminClient.from("bookings").insert({
+            user_id: userId,
+            class_id: classData.id,
+            booking_date: bookingDate,
+            status: "confirmed",
+          });
+        }
+      }
     }
 
     return new Response(JSON.stringify({ user: newUser }), {
