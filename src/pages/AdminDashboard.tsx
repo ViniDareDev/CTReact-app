@@ -482,7 +482,7 @@ const AdminDashboard = () => {
                     {Object.entries(todayByMethod).map(([method, val]) => (
                       <div key={method} className="rounded-lg bg-secondary/30 p-2 text-center">
                         <p className="text-[9px] text-muted-foreground">{method}</p>
-                        <p className="text-xs font-bold text-foreground">R$ {val.toFixed(2).replace(".", ",")}</p>
+                        <p className="text-xs font-bold text-foreground">R$ {(val as number).toFixed(2).replace(".", ",")}</p>
                       </div>
                     ))}
                   </div>
