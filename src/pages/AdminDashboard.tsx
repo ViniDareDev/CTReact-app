@@ -493,7 +493,7 @@ const AdminDashboard = () => {
                     {Object.entries(todayByType).map(([type, val]) => (
                       <div key={type} className="flex items-center justify-between rounded-lg bg-secondary/20 px-3 py-1.5">
                         <span className="text-[10px] text-muted-foreground">{type}</span>
-                        <span className="text-[10px] font-bold text-foreground">R$ {val.toFixed(2).replace(".", ",")}</span>
+                        <span className="text-[10px] font-bold text-foreground">R$ {(val as number).toFixed(2).replace(".", ",")}</span>
                       </div>
                     ))}
                   </div>
