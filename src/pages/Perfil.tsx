@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Phone, Calendar, Mail, Pencil, Lock, Eye, EyeOff, Camera, Check, X } from "lucide-react";
+import { Phone, Calendar, Mail, Pencil, Lock, Eye, EyeOff, Camera, Check, X, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import AppLayout from "@/components/AppLayout";
@@ -11,6 +11,7 @@ const Perfil = () => {
   const { profile, user, refreshProfile } = useAuth();
   const { toast } = useToast();
   const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState("");
   const [editEmail, setEditEmail] = useState("");
   const [editPhone, setEditPhone] = useState("");
   const [editBirthDate, setEditBirthDate] = useState("");
@@ -26,6 +27,7 @@ const Perfil = () => {
     .join("") || "?";
 
   const startEditing = () => {
+    setEditName(profile?.name || "");
     setEditEmail(profile?.email || "");
     setEditPhone(profile?.phone || "");
     setEditBirthDate(profile?.birth_date || "");
@@ -59,7 +61,6 @@ const Perfil = () => {
     try {
       let avatarUrl = profile?.avatar_url || null;
 
-      // Upload avatar if changed
       if (avatarFile) {
         const ext = avatarFile.name.split(".").pop();
         const path = `avatars/${user.id}.${ext}`;
@@ -73,10 +74,10 @@ const Perfil = () => {
         }
       }
 
-      // Update profile
       const { error: profileError } = await supabase
         .from("profiles")
         .update({
+          name: editName,
           email: editEmail,
           phone: editPhone || null,
           birth_date: editBirthDate || null,
@@ -86,13 +87,11 @@ const Perfil = () => {
 
       if (profileError) throw profileError;
 
-      // Update password if provided
       if (newPassword) {
         const { error: pwError } = await supabase.auth.updateUser({ password: newPassword });
         if (pwError) throw pwError;
       }
 
-      // Update email in auth if changed
       if (editEmail !== profile?.email) {
         const { error: emailError } = await supabase.auth.updateUser({ email: editEmail });
         if (emailError) throw emailError;
@@ -136,6 +135,7 @@ const Perfil = () => {
           <>
             <div className="space-y-3">
               {[
+                { icon: User, label: "Nome Completo", value: profile?.name },
                 { icon: Mail, label: "E-mail", value: profile?.email },
                 { icon: Phone, label: "Telefone", value: profile?.phone },
                 { icon: Calendar, label: "Nascimento", value: profile?.birth_date ? new Date(profile.birth_date).toLocaleDateString("pt-BR") : "—" },
@@ -159,6 +159,10 @@ const Perfil = () => {
         ) : (
           <div className="space-y-3 animate-fade-in">
             <div className="glass-card p-4 space-y-3">
+              <div>
+                <label className="text-[10px] text-muted-foreground">Nome Completo</label>
+                <Input value={editName} onChange={(e) => setEditName(e.target.value)} className="border-border/50 bg-secondary/50 text-foreground focus:border-primary mt-1" />
+              </div>
               <div>
                 <label className="text-[10px] text-muted-foreground">E-mail</label>
                 <Input type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} className="border-border/50 bg-secondary/50 text-foreground focus:border-primary mt-1" />

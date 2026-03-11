@@ -13,7 +13,7 @@ const months = [
   "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
 ];
 
-const allTimeSlots = ["16:00", "17:00", "18:00", "19:00", "20:00"];
+const allTimeSlots = ["06:00", "07:00", "08:00", "09:00", "10:00", "11:00", "16:00", "17:00", "18:00", "19:00"];
 
 const TRIAL_PRICE = 35;
 
@@ -152,11 +152,8 @@ const AulaExperimental = () => {
     }
 
     setLoading(true);
-
-    // Simulate payment processing
     await new Promise((r) => setTimeout(r, 2000));
 
-    // Now create the booking
     const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(selectedDay!).padStart(2, "0")}`;
     const selectedDate = new Date(year, month, selectedDay!);
     const dayOfWeek = selectedDate.getDay();
@@ -364,29 +361,65 @@ const AulaExperimental = () => {
                 </h3>
               </div>
               {availableTimeSlots.length > 0 ? (
-                <div className="grid grid-cols-3 gap-2">
-                  {availableTimeSlots.map((time) => {
-                    const spots = spotsMap[time] ?? 6;
-                    const full = spots <= 0;
-                    return (
-                      <button
-                        key={time}
-                        disabled={full}
-                        onClick={() => setSelectedTime(time)}
-                        className={`rounded-lg border px-3 py-2 text-xs font-medium transition-all
-                          ${full ? "opacity-40 cursor-not-allowed border-border" :
-                            selectedTime === time
-                              ? "gold-gradient border-transparent text-primary-foreground"
-                              : "border-border hover:border-primary/40 hover:bg-secondary/50"
-                          }`}
-                      >
-                        {time}
-                        <span className={`block text-[9px] mt-0.5 ${full ? "text-destructive" : "text-muted-foreground"}`}>
-                          {full ? "Lotada" : `${spots} vaga${spots !== 1 ? "s" : ""}`}
-                        </span>
-                      </button>
-                    );
-                  })}
+                <div className="space-y-3">
+                  {availableTimeSlots.some((t) => parseInt(t) < 12) && (
+                    <div>
+                      <p className="text-[10px] text-muted-foreground mb-1.5">Manhã</p>
+                      <div className="grid grid-cols-3 gap-2">
+                        {availableTimeSlots.filter((t) => parseInt(t) < 12).map((time) => {
+                          const spots = spotsMap[time] ?? 6;
+                          const full = spots <= 0;
+                          return (
+                            <button
+                              key={time}
+                              disabled={full}
+                              onClick={() => setSelectedTime(time)}
+                              className={`rounded-lg border px-3 py-2 text-xs font-medium transition-all
+                                ${full ? "opacity-40 cursor-not-allowed border-border" :
+                                  selectedTime === time
+                                    ? "gold-gradient border-transparent text-primary-foreground"
+                                    : "border-border hover:border-primary/40 hover:bg-secondary/50"
+                                }`}
+                            >
+                              {time}
+                              <span className={`block text-[9px] mt-0.5 ${full ? "text-destructive" : "text-muted-foreground"}`}>
+                                {full ? "Lotada" : `${spots} vaga${spots !== 1 ? "s" : ""}`}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                  {availableTimeSlots.some((t) => parseInt(t) >= 16) && (
+                    <div>
+                      <p className="text-[10px] text-muted-foreground mb-1.5">Tarde</p>
+                      <div className="grid grid-cols-3 gap-2">
+                        {availableTimeSlots.filter((t) => parseInt(t) >= 16).map((time) => {
+                          const spots = spotsMap[time] ?? 6;
+                          const full = spots <= 0;
+                          return (
+                            <button
+                              key={time}
+                              disabled={full}
+                              onClick={() => setSelectedTime(time)}
+                              className={`rounded-lg border px-3 py-2 text-xs font-medium transition-all
+                                ${full ? "opacity-40 cursor-not-allowed border-border" :
+                                  selectedTime === time
+                                    ? "gold-gradient border-transparent text-primary-foreground"
+                                    : "border-border hover:border-primary/40 hover:bg-secondary/50"
+                                }`}
+                            >
+                              {time}
+                              <span className={`block text-[9px] mt-0.5 ${full ? "text-destructive" : "text-muted-foreground"}`}>
+                                {full ? "Lotada" : `${spots} vaga${spots !== 1 ? "s" : ""}`}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <p className="text-xs text-muted-foreground text-center py-3">
