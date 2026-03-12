@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { DollarSign, Users, UserPlus, GraduationCap, CalendarDays, Home, Search, Pencil, Trash2, Plus, Clock, ChevronDown, ChevronUp, Eye, EyeOff, Lock, User, Mail, Phone, Camera } from "lucide-react";
+import { DollarSign, Users, UserPlus, GraduationCap, CalendarDays, Home, Search, Pencil, Trash2, Plus, Clock, Eye, EyeOff, Lock, User, Mail, Phone, Camera, CreditCard, QrCode, FileText } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import logoTransparent from "@/assets/logo-transparent.png";
 import { LogOut } from "lucide-react";
 
@@ -43,14 +43,81 @@ const allTimeSlots = ["06:00", "07:00", "08:00", "09:00", "10:00", "11:00", "16:
 const dayLabels: Record<number, string> = { 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta" };
 const frequencyToCount: Record<string, number> = { "2x": 2, "3x": 3, "4x": 4 };
 
+const categorizePayment = (description: string | null): string => {
+  const desc = (description || "").toLowerCase();
+  if (desc.includes("experimental")) return "Aula Experimental";
+  if (desc.includes("alteração") || desc.includes("alteracao")) return "Alteração de Plano";
+  if (desc.includes("avaliação") || desc.includes("avaliacao")) return "Avaliação";
+  return "Pagamento do Plano";
+};
+
+const formatPaymentMethod = (method: string): string => {
+  return method === "cartao" ? "Cartão de Crédito" : "PIX";
+};
+
+const formatCPF = (value: string) => {
+  const digits = value.replace(/\D/g, "").slice(0, 11);
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+  if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+  return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
+};
+
 type AdminTab = "home" | "alunos" | "professores" | "turmas" | "pagamentos";
+
+const PaymentTotals = ({ payments, label }: { payments: any[]; label: string }) => {
+  const total = payments.reduce((acc, p) => acc + Number(p.amount), 0);
+  const byMethod = payments.reduce((acc: Record<string, number>, p) => {
+    const m = formatPaymentMethod(p.method);
+    acc[m] = (acc[m] || 0) + Number(p.amount);
+    return acc;
+  }, {});
+  const byType = payments.reduce((acc: Record<string, number>, p) => {
+    const cat = categorizePayment(p.description);
+    acc[cat] = (acc[cat] || 0) + Number(p.amount);
+    return acc;
+  }, {});
+
+  return (
+    <div className="space-y-3">
+      <div className="rounded-lg bg-primary/10 p-3 text-center">
+        <p className="text-[10px] text-muted-foreground">{label}</p>
+        <p className="font-heading text-xl font-bold gold-text">
+          R$ {total.toFixed(2).replace(".", ",")}
+        </p>
+      </div>
+      {Object.keys(byMethod).length > 0 && (
+        <div className="grid grid-cols-2 gap-2">
+          {Object.entries(byMethod).map(([method, val]) => (
+            <div key={method} className="rounded-lg bg-secondary/30 p-2 text-center">
+              <div className="flex items-center justify-center gap-1 mb-0.5">
+                {method === "PIX" ? <QrCode className="h-3 w-3 text-muted-foreground" /> : <CreditCard className="h-3 w-3 text-muted-foreground" />}
+                <p className="text-[9px] text-muted-foreground">{method}</p>
+              </div>
+              <p className="text-xs font-bold text-foreground">R$ {(val as number).toFixed(2).replace(".", ",")}</p>
+            </div>
+          ))}
+        </div>
+      )}
+      {Object.keys(byType).length > 0 && (
+        <div className="space-y-1">
+          {Object.entries(byType).map(([type, val]) => (
+            <div key={type} className="flex items-center justify-between rounded-lg bg-secondary/20 px-3 py-1.5">
+              <span className="text-[10px] text-muted-foreground">{type}</span>
+              <span className="text-[10px] font-bold text-foreground">R$ {(val as number).toFixed(2).replace(".", ",")}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const AdminDashboard = () => {
   const today = new Date().toISOString().split("T")[0];
   const { toast } = useToast();
   const { session, profile, signOut } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
 
   const [activeTab, setActiveTab] = useState<AdminTab>("home");
 
@@ -82,6 +149,7 @@ const AdminDashboard = () => {
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [telefone, setTelefone] = useState("");
+  const [cpf, setCpf] = useState("");
   const [dataNascimento, setDataNascimento] = useState("");
   const [senha, setSenha] = useState("");
   const [mostrarSenha, setMostrarSenha] = useState(false);
@@ -94,6 +162,7 @@ const AdminDashboard = () => {
   const [students, setStudents] = useState<any[]>([]);
   const [studentSearch, setStudentSearch] = useState("");
   const [editingStudent, setEditingStudent] = useState<any | null>(null);
+  const [editStudentData, setEditStudentData] = useState<any>({});
 
   const nomeGestor = profile?.name?.split(" ")[0] || "Gestor";
 
@@ -146,7 +215,6 @@ const AdminDashboard = () => {
         .eq("booking_date", todayStr)
         .eq("status", "confirmed");
 
-      // Filter: only show classes currently in progress (started but not ended)
       const filtered = classes.filter((c) => {
         const [h] = c.time_slot.split(":").map(Number);
         const classEndMinutes = (h + 1) * 60;
@@ -154,7 +222,6 @@ const AdminDashboard = () => {
         return nowMinutes < classEndMinutes && nowMinutes >= h * 60;
       });
 
-      // If no class is currently in progress, show next upcoming classes
       let displayClasses = filtered;
       if (filtered.length === 0) {
         displayClasses = classes.filter((c) => {
@@ -163,7 +230,6 @@ const AdminDashboard = () => {
         }).slice(0, 3);
       }
 
-      // If still empty (all classes done), show all today's classes
       if (displayClasses.length === 0) {
         displayClasses = classes;
       }
@@ -183,7 +249,7 @@ const AdminDashboard = () => {
     };
 
     fetchTodayClasses();
-    const interval = setInterval(fetchTodayClasses, 60000); // refresh every minute
+    const interval = setInterval(fetchTodayClasses, 60000);
 
     const channel = supabase
       .channel("admin-today-classes")
@@ -206,45 +272,45 @@ const AdminDashboard = () => {
         .gte("created_at", `${dataInicio}T00:00:00`)
         .lte("created_at", `${dataFim}T23:59:59`)
         .eq("status", "paid")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: true });
       setPayments(data || []);
     };
     fetchPayments();
   }, [dataInicio, dataFim, activeTab]);
 
   // ── Fetch classes for Turmas tab ──
+  const fetchClasses = async () => {
+    const todayStr = new Date().toISOString().split("T")[0];
+    const { data: classes } = await supabase
+      .from("classes")
+      .select("id, time_slot, max_students, teacher_id")
+      .eq("day_of_week", selectedDayOfWeek)
+      .order("time_slot");
+
+    if (!classes) return;
+
+    const { data: bookings } = await supabase
+      .from("bookings")
+      .select("class_id, user_id, is_trial, trial_name, profiles(name)")
+      .eq("booking_date", todayStr)
+      .eq("status", "confirmed");
+
+    const enriched = classes.map((c) => {
+      const classBookings = bookings?.filter((b) => b.class_id === c.id) || [];
+      return {
+        ...c,
+        bookings: classBookings.map((b) => ({
+          name: b.is_trial ? `${b.trial_name} (Experimental)` : (b as any).profiles?.name || "Aluno",
+          isTrial: b.is_trial,
+        })),
+      };
+    });
+
+    setClassesData(enriched);
+  };
+
   useEffect(() => {
     if (activeTab !== "turmas") return;
-    const fetchClasses = async () => {
-      const todayStr = new Date().toISOString().split("T")[0];
-      const { data: classes } = await supabase
-        .from("classes")
-        .select("id, time_slot, max_students, teacher_id")
-        .eq("day_of_week", selectedDayOfWeek)
-        .order("time_slot");
-
-      if (!classes) return;
-
-      const { data: bookings } = await supabase
-        .from("bookings")
-        .select("class_id, user_id, is_trial, trial_name, profiles(name)")
-        .eq("booking_date", todayStr)
-        .eq("status", "confirmed");
-
-      const enriched = classes.map((c) => {
-        const classBookings = bookings?.filter((b) => b.class_id === c.id) || [];
-        return {
-          ...c,
-          bookings: classBookings.map((b) => ({
-            name: b.is_trial ? `${b.trial_name} (Experimental)` : (b as any).profiles?.name || "Aluno",
-            isTrial: b.is_trial,
-          })),
-        };
-      });
-
-      setClassesData(enriched);
-    };
-
     fetchClasses();
 
     const channel = supabase
@@ -275,25 +341,6 @@ const AdminDashboard = () => {
   }, [activeTab]);
 
   // ── Helpers ──
-  const totalTodayReceived = todayPayments.reduce((acc, p) => acc + Number(p.amount), 0);
-  const todayByMethod = todayPayments.reduce((acc: Record<string, number>, p) => {
-    const m = p.method === "cartao" ? "Cartão de Crédito" : "PIX";
-    acc[m] = (acc[m] || 0) + Number(p.amount);
-    return acc;
-  }, {});
-  const todayByType = todayPayments.reduce((acc: Record<string, number>, p) => {
-    const desc = p.description || "Outros";
-    let category = "Outros";
-    if (desc.toLowerCase().includes("experimental")) category = "Aula Experimental";
-    else if (desc.toLowerCase().includes("alteração") || desc.toLowerCase().includes("plano")) category = "Alteração de Plano";
-    else if (desc.toLowerCase().includes("avaliação")) category = "Avaliação";
-    else category = "Pagamento do Plano";
-    acc[category] = (acc[category] || 0) + Number(p.amount);
-    return acc;
-  }, {});
-
-  const totalRecebido = payments.reduce((acc, p) => acc + Number(p.amount), 0);
-
   const formatTelefone = (value: string) => {
     const digits = value.replace(/\D/g, "").slice(0, 11);
     if (digits.length <= 2) return `(${digits}`;
@@ -319,6 +366,11 @@ const AdminDashboard = () => {
     });
   };
 
+  const resetCadastroForm = () => {
+    setNome(""); setEmail(""); setTelefone(""); setCpf(""); setDataNascimento(""); setSenha("");
+    setModalidade(""); setTipoPlano(""); setFrequencia(""); setSelectedWeekdays([]); setSelectedTimeSlots({});
+  };
+
   const handleCadastro = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nome || !email || !senha || !modalidade || !tipoPlano || !frequencia) {
@@ -333,7 +385,6 @@ const AdminDashboard = () => {
       toast({ title: `Selecione exatamente ${requiredDaysCount} dias da semana`, variant: "destructive" });
       return;
     }
-    // Check all days have time slots
     for (const day of selectedWeekdays) {
       if (!selectedTimeSlots[day]) {
         toast({ title: `Selecione o horário para ${dayLabels[day]}`, variant: "destructive" });
@@ -345,7 +396,7 @@ const AdminDashboard = () => {
 
     const { data, error } = await supabase.functions.invoke("create-student", {
       body: {
-        email, password: senha, name: nome, phone: telefone,
+        email, password: senha, name: nome, phone: telefone, cpf: cpf || null,
         birth_date: dataNascimento || null,
         modality: modalidadeLabels[modalidade as Modalidade],
         plan_type: tipoPlanoLabels[tipoPlano as TipoPlano],
@@ -364,15 +415,15 @@ const AdminDashboard = () => {
 
     toast({ title: "Aluno cadastrado com sucesso! ✅" });
     setShowCadastroForm(false);
-    setNome(""); setEmail(""); setTelefone(""); setDataNascimento(""); setSenha("");
-    setModalidade(""); setTipoPlano(""); setFrequencia(""); setSelectedWeekdays([]); setSelectedTimeSlots({});
-    // Refresh students
+    resetCadastroForm();
     const { data: studs } = await supabase.from("profiles").select("*").order("name");
     setStudents(studs || []);
   };
 
   const handleAssignTeacher = async (classId: string, teacherId: string) => {
     await supabase.from("classes").update({ teacher_id: teacherId || null }).eq("id", classId);
+    // Update local state immediately
+    setClassesData((prev) => prev.map((c) => c.id === classId ? { ...c, teacher_id: teacherId || null } : c));
     toast({ title: "Professor atualizado" });
   };
 
@@ -408,13 +459,48 @@ const AdminDashboard = () => {
   };
 
   const handleDeleteStudent = async (id: string) => {
-    // Delete via edge function or admin - for now just remove profile
     const { error } = await supabase.from("profiles").delete().eq("id", id);
     if (error) {
       toast({ title: "Erro ao excluir aluno", description: error.message, variant: "destructive" });
       return;
     }
     toast({ title: "Aluno removido" });
+    const { data } = await supabase.from("profiles").select("*").order("name");
+    setStudents(data || []);
+  };
+
+  const startEditStudent = (student: any) => {
+    setEditingStudent(student);
+    setEditStudentData({
+      name: student.name || "",
+      email: student.email || "",
+      phone: student.phone || "",
+      cpf: student.cpf || "",
+      birth_date: student.birth_date || "",
+      modality: student.modality || "",
+      plan_type: student.plan_type || "",
+      frequency: student.frequency || "",
+    });
+  };
+
+  const handleSaveStudent = async () => {
+    if (!editingStudent) return;
+    const { error } = await supabase.from("profiles").update({
+      name: editStudentData.name,
+      phone: editStudentData.phone || null,
+      cpf: editStudentData.cpf || null,
+      birth_date: editStudentData.birth_date || null,
+      modality: editStudentData.modality || null,
+      plan_type: editStudentData.plan_type || null,
+      frequency: editStudentData.frequency || null,
+    }).eq("id", editingStudent.id);
+
+    if (error) {
+      toast({ title: "Erro ao atualizar aluno", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Aluno atualizado com sucesso! ✅" });
+    setEditingStudent(null);
     const { data } = await supabase.from("profiles").select("*").order("name");
     setStudents(data || []);
   };
@@ -434,6 +520,12 @@ const AdminDashboard = () => {
     { key: "turmas" as AdminTab, icon: CalendarDays, label: "Turmas" },
     { key: "pagamentos" as AdminTab, icon: DollarSign, label: "Pagamentos" },
   ];
+
+  const formatBirthDate = (dateStr: string | null) => {
+    if (!dateStr) return "—";
+    const [y, m, d] = dateStr.split("-");
+    return `${d}/${m}/${y}`;
+  };
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -456,7 +548,6 @@ const AdminDashboard = () => {
           {/* ═══════════════ HOME TAB ═══════════════ */}
           {activeTab === "home" && (
             <>
-              {/* Welcome */}
               <div className="mb-4">
                 <h1 className="font-heading text-xl font-bold">
                   Olá, <span className="gold-text">{nomeGestor}</span> 👋
@@ -470,34 +561,7 @@ const AdminDashboard = () => {
                   <DollarSign className="h-5 w-5 text-primary" />
                   <h2 className="font-heading text-sm font-bold">Recebimentos de Hoje</h2>
                 </div>
-                <div className="rounded-lg bg-primary/10 p-3 text-center">
-                  <p className="text-[10px] text-muted-foreground">Total Recebido</p>
-                  <p className="font-heading text-xl font-bold gold-text">
-                    R$ {totalTodayReceived.toFixed(2).replace(".", ",")}
-                  </p>
-                </div>
-                {/* By method */}
-                {Object.keys(todayByMethod).length > 0 && (
-                  <div className="grid grid-cols-2 gap-2">
-                    {Object.entries(todayByMethod).map(([method, val]) => (
-                      <div key={method} className="rounded-lg bg-secondary/30 p-2 text-center">
-                        <p className="text-[9px] text-muted-foreground">{method}</p>
-                        <p className="text-xs font-bold text-foreground">R$ {(val as number).toFixed(2).replace(".", ",")}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {/* By type */}
-                {Object.keys(todayByType).length > 0 && (
-                  <div className="space-y-1">
-                    {Object.entries(todayByType).map(([type, val]) => (
-                      <div key={type} className="flex items-center justify-between rounded-lg bg-secondary/20 px-3 py-1.5">
-                        <span className="text-[10px] text-muted-foreground">{type}</span>
-                        <span className="text-[10px] font-bold text-foreground">R$ {(val as number).toFixed(2).replace(".", ",")}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <PaymentTotals payments={todayPayments} label="Total Recebido" />
                 {todayPayments.length === 0 && (
                   <p className="text-xs text-muted-foreground text-center py-2">Nenhum recebimento hoje.</p>
                 )}
@@ -573,12 +637,57 @@ const AdminDashboard = () => {
             <>
               <div className="flex items-center justify-between">
                 <h2 className="font-heading text-lg font-bold">Alunos</h2>
-                <Button size="sm" onClick={() => setShowCadastroForm(!showCadastroForm)} className="gold-gradient text-primary-foreground hover:opacity-90">
+                <Button size="sm" onClick={() => { setShowCadastroForm(!showCadastroForm); setEditingStudent(null); }} className="gold-gradient text-primary-foreground hover:opacity-90">
                   <Plus className="h-4 w-4 mr-1" /> Cadastrar
                 </Button>
               </div>
 
-              {showCadastroForm && (
+              {/* Edit Student Form */}
+              {editingStudent && (
+                <div className="glass-card p-4 space-y-3 animate-fade-in">
+                  <h3 className="font-heading text-sm font-bold">Editar Aluno</h3>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-[10px] text-muted-foreground">Nome Completo</label>
+                      <Input value={editStudentData.name} onChange={(e) => setEditStudentData({ ...editStudentData, name: e.target.value })} className="border-border/50 bg-secondary/50 text-foreground focus:border-primary mt-1" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground">E-mail (somente leitura)</label>
+                      <Input value={editStudentData.email} disabled className="border-border/50 bg-secondary/30 text-muted-foreground mt-1" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground">Telefone</label>
+                      <Input value={editStudentData.phone} onChange={(e) => setEditStudentData({ ...editStudentData, phone: formatTelefone(e.target.value) })} className="border-border/50 bg-secondary/50 text-foreground focus:border-primary mt-1" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground">CPF</label>
+                      <Input value={editStudentData.cpf} onChange={(e) => setEditStudentData({ ...editStudentData, cpf: formatCPF(e.target.value) })} placeholder="000.000.000-00" className="border-border/50 bg-secondary/50 text-foreground focus:border-primary mt-1" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground">Data de Nascimento</label>
+                      <Input type="date" value={editStudentData.birth_date} onChange={(e) => setEditStudentData({ ...editStudentData, birth_date: e.target.value })} className="border-border/50 bg-secondary/50 text-foreground focus:border-primary mt-1" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground">Modalidade</label>
+                      <Input value={editStudentData.modality} onChange={(e) => setEditStudentData({ ...editStudentData, modality: e.target.value })} className="border-border/50 bg-secondary/50 text-foreground focus:border-primary mt-1" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground">Plano</label>
+                      <Input value={editStudentData.plan_type} onChange={(e) => setEditStudentData({ ...editStudentData, plan_type: e.target.value })} className="border-border/50 bg-secondary/50 text-foreground focus:border-primary mt-1" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground">Frequência</label>
+                      <Input value={editStudentData.frequency} onChange={(e) => setEditStudentData({ ...editStudentData, frequency: e.target.value })} className="border-border/50 bg-secondary/50 text-foreground focus:border-primary mt-1" />
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <Button variant="outline" className="flex-1 border-border" onClick={() => setEditingStudent(null)}>Cancelar</Button>
+                    <Button className="flex-1 gold-gradient text-primary-foreground font-heading font-semibold hover:opacity-90" onClick={handleSaveStudent}>Salvar</Button>
+                  </div>
+                </div>
+              )}
+
+              {showCadastroForm && !editingStudent && (
                 <form onSubmit={handleCadastro} className="glass-card p-4 space-y-3 animate-fade-in">
                   <h3 className="font-heading text-sm font-bold">Novo Aluno</h3>
                   <div className="space-y-3">
@@ -594,6 +703,7 @@ const AdminDashboard = () => {
                       <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input placeholder="Telefone com DDD" value={telefone} onChange={(e) => setTelefone(formatTelefone(e.target.value))} className="border-border/50 bg-secondary/50 pl-10 text-foreground placeholder:text-muted-foreground focus:border-primary" />
                     </div>
+                    <Input placeholder="CPF" value={cpf} onChange={(e) => setCpf(formatCPF(e.target.value))} className="border-border/50 bg-secondary/50 text-foreground placeholder:text-muted-foreground focus:border-primary" />
                     <div className="relative">
                       <CalendarDays className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input type="date" value={dataNascimento} onChange={(e) => setDataNascimento(e.target.value)} className="border-border/50 bg-secondary/50 pl-10 text-foreground placeholder:text-muted-foreground focus:border-primary" />
@@ -690,7 +800,6 @@ const AdminDashboard = () => {
                           );
                         })}
                       </div>
-                      {/* Time slot for each selected day */}
                       {selectedWeekdays.sort().map((day) => (
                         <div key={day} className="flex items-center gap-2 animate-fade-in">
                           <span className="text-xs font-medium text-foreground w-16">{dayLabels[day]?.slice(0, 3)}:</span>
@@ -728,8 +837,13 @@ const AdminDashboard = () => {
                       <p className="text-xs font-semibold">{s.name}</p>
                       <p className="text-[10px] text-muted-foreground">{s.email}</p>
                       <p className="text-[10px] text-muted-foreground">{s.modality || "—"} • {s.frequency || "—"}</p>
+                      {s.cpf && <p className="text-[10px] text-muted-foreground">CPF: {s.cpf}</p>}
+                      {s.birth_date && <p className="text-[10px] text-muted-foreground">Nasc: {formatBirthDate(s.birth_date)}</p>}
                     </div>
                     <div className="flex gap-1">
+                      <button onClick={() => startEditStudent(s)} className="text-primary hover:text-primary/80 p-1">
+                        <Pencil className="h-4 w-4" />
+                      </button>
                       <button onClick={() => handleDeleteStudent(s.id)} className="text-destructive hover:text-destructive/80 p-1">
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -884,22 +998,23 @@ const AdminDashboard = () => {
                     <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} className="border-border/50 bg-secondary/50 text-foreground text-xs focus:border-primary" />
                   </div>
                 </div>
-                <div className="rounded-lg bg-primary/10 p-3 text-center">
-                  <p className="text-[10px] text-muted-foreground">Total Recebido</p>
-                  <p className="font-heading text-xl font-bold gold-text">
-                    R$ {totalRecebido.toFixed(2).replace(".", ",")}
-                  </p>
-                </div>
+
+                <PaymentTotals payments={payments} label="Total Recebido" />
+
+                {/* Extrato cronológico */}
                 {payments.length > 0 ? (
                   <div className="space-y-2">
+                    <h3 className="text-xs font-semibold text-foreground flex items-center gap-1">
+                      <FileText className="h-3.5 w-3.5 text-primary" /> Extrato
+                    </h3>
                     {payments.map((p, i) => (
                       <div key={i} className="flex items-center justify-between rounded-lg bg-secondary/30 p-3">
                         <div>
                           <p className="text-xs font-medium">{(p as any).profiles?.name || "—"}</p>
                           <p className="text-[10px] text-muted-foreground">
-                            {new Date(p.created_at).toLocaleDateString("pt-BR")} • {p.method === "cartao" ? "Cartão" : "PIX"}
+                            {new Date(p.created_at).toLocaleDateString("pt-BR")} {new Date(p.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })} • {formatPaymentMethod(p.method)}
                           </p>
-                          {p.description && <p className="text-[9px] text-muted-foreground">{p.description}</p>}
+                          <p className="text-[9px] text-primary font-medium">{categorizePayment(p.description)}</p>
                         </div>
                         <p className="text-xs font-bold text-success">R$ {Number(p.amount).toFixed(2).replace(".", ",")}</p>
                       </div>

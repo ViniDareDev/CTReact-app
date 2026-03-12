@@ -1,11 +1,25 @@
 import { useState } from "react";
-import { Phone, Calendar, Mail, Pencil, Lock, Eye, EyeOff, Camera, Check, X, User } from "lucide-react";
+import { Phone, Calendar, Mail, Pencil, Lock, Eye, EyeOff, Camera, Check, X, User, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import AppLayout from "@/components/AppLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+
+const formatCPF = (value: string) => {
+  const digits = value.replace(/\D/g, "").slice(0, 11);
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+  if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+  return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
+};
+
+const formatBirthDate = (dateStr: string | null) => {
+  if (!dateStr) return "—";
+  const [y, m, d] = dateStr.split("-");
+  return `${d}/${m}/${y}`;
+};
 
 const Perfil = () => {
   const { profile, user, refreshProfile } = useAuth();
@@ -14,6 +28,7 @@ const Perfil = () => {
   const [editName, setEditName] = useState("");
   const [editEmail, setEditEmail] = useState("");
   const [editPhone, setEditPhone] = useState("");
+  const [editCpf, setEditCpf] = useState("");
   const [editBirthDate, setEditBirthDate] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -30,6 +45,7 @@ const Perfil = () => {
     setEditName(profile?.name || "");
     setEditEmail(profile?.email || "");
     setEditPhone(profile?.phone || "");
+    setEditCpf((profile as any)?.cpf || "");
     setEditBirthDate(profile?.birth_date || "");
     setNewPassword("");
     setAvatarFile(null);
@@ -82,7 +98,8 @@ const Perfil = () => {
           phone: editPhone || null,
           birth_date: editBirthDate || null,
           avatar_url: avatarUrl,
-        })
+          cpf: editCpf || null,
+        } as any)
         .eq("id", user.id);
 
       if (profileError) throw profileError;
@@ -138,7 +155,8 @@ const Perfil = () => {
                 { icon: User, label: "Nome Completo", value: profile?.name },
                 { icon: Mail, label: "E-mail", value: profile?.email },
                 { icon: Phone, label: "Telefone", value: profile?.phone },
-                { icon: Calendar, label: "Nascimento", value: profile?.birth_date ? new Date(profile.birth_date).toLocaleDateString("pt-BR") : "—" },
+                { icon: FileText, label: "CPF", value: (profile as any)?.cpf },
+                { icon: Calendar, label: "Nascimento", value: formatBirthDate(profile?.birth_date || null) },
               ].map((item) => (
                 <div key={item.label} className="glass-card flex items-center gap-3 p-4">
                   <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
@@ -170,6 +188,10 @@ const Perfil = () => {
               <div>
                 <label className="text-[10px] text-muted-foreground">Telefone</label>
                 <Input value={editPhone} onChange={(e) => setEditPhone(formatTelefone(e.target.value))} className="border-border/50 bg-secondary/50 text-foreground focus:border-primary mt-1" />
+              </div>
+              <div>
+                <label className="text-[10px] text-muted-foreground">CPF</label>
+                <Input value={editCpf} onChange={(e) => setEditCpf(formatCPF(e.target.value))} placeholder="000.000.000-00" className="border-border/50 bg-secondary/50 text-foreground focus:border-primary mt-1" />
               </div>
               <div>
                 <label className="text-[10px] text-muted-foreground">Data de Nascimento</label>
