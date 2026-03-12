@@ -19,9 +19,21 @@ Deno.serve(async (req) => {
       });
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+
+    if (!supabaseUrl || !serviceRoleKey || !anonKey) {
+      console.error("Missing env vars:", { 
+        hasUrl: !!supabaseUrl, 
+        hasServiceKey: !!serviceRoleKey, 
+        hasAnonKey: !!anonKey 
+      });
+      return new Response(JSON.stringify({ error: "Server configuration error" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Verify caller is admin
     const callerClient = createClient(supabaseUrl, anonKey, {
@@ -50,14 +62,14 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { email, password, name, phone, birth_date, modality, plan_type, frequency, scheduled_days, scheduled_time_slots } = await req.json();
+    const { email, password, name, phone, cpf, birth_date, modality, plan_type, frequency, scheduled_days, scheduled_time_slots } = await req.json();
 
     // Create user with admin API
     const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
       email,
       password,
       email_confirm: true,
-      user_metadata: { name, phone, birth_date, modality, plan_type, frequency },
+      user_metadata: { name, phone, cpf, birth_date, modality, plan_type, frequency },
     });
 
     if (createError) {
@@ -75,24 +87,26 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Update scheduled_days if provided
-    if (scheduled_days) {
+    // Update scheduled_days and cpf if provided
+    const profileUpdate: Record<string, any> = {};
+    if (scheduled_days) profileUpdate.scheduled_days = scheduled_days;
+    if (cpf) profileUpdate.cpf = cpf;
+    
+    if (Object.keys(profileUpdate).length > 0) {
       await adminClient
         .from("profiles")
-        .update({ scheduled_days })
+        .update(profileUpdate)
         .eq("id", userId);
     }
 
     // Auto-book classes for each scheduled day+time
     if (scheduled_days && scheduled_time_slots) {
       const today = new Date();
-      const todayStr = today.toISOString().split("T")[0];
 
       for (const dayOfWeek of scheduled_days) {
         const timeSlot = scheduled_time_slots[String(dayOfWeek)];
         if (!timeSlot) continue;
 
-        // Find the class for this day+time
         const { data: classData } = await adminClient
           .from("classes")
           .select("id")
@@ -101,7 +115,6 @@ Deno.serve(async (req) => {
           .single();
 
         if (classData) {
-          // Find the next occurrence of this day of week
           const currentDow = today.getDay();
           let daysUntil = dayOfWeek - currentDow;
           if (daysUntil <= 0) daysUntil += 7;
